@@ -1,0 +1,23 @@
+{
+  "name": "uniguard-frontend",
+  "version": "1.0.0",
+  "description": "UniGuard Hostel Misconduct Prediction System",
+  "main": "index.html",
+  "scripts": {
+    "start": "live-server . --port=3000",
+    "dev": "live-server . --port=3000 --watch=index.html,dashboard.html,style.css,script.js",
+    "test": "echo \"No tests specified\""
+  },
+  "keywords": [
+    "dashboard",
+    "hostel",
+    "misconduct",
+    "prediction",
+    "analytics"
+  ],
+  "author": "Akinpelu Alli",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}

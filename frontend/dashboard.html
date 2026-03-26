@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>UniGuard • Security Intelligence Dashboard</title>
+    <link rel="shortcut icon" href="/images/favi-removebg-preview.png" type="image/x-icon">
+    <!-- Google Fonts - Professional -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.35.0/dist/apexcharts.min.js"></script>
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        /* ========== GLOBAL VARIABLES ========== */
+        :root {
+            --primary: #3B82F6;
+            --primary-dark: #2563EB;
+            --secondary: #8B5CF6;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #06B6D4;
+            --bg-deep: #0B1120;
+            --bg-dark: #0F172A;
+            --bg-card: rgba(15, 23, 42, 0.8);
+            --bg-sidebar: rgba(15, 23, 42, 0.95);
+            --bg-navbar: rgba(15, 23, 42, 0.9);
+            --text-primary: #F1F5F9;
+            --text-secondary: #CBD5E1;
+            --text-muted: #94A3B8;
+            --border: rgba(59, 130, 246, 0.2);
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --sidebar-width: 260px;
+        }
+
+        /* ========== LIGHT MODE ========== */
+        .light-mode {
+            --bg-deep: #F8FAFC;
+            --bg-dark: #F1F5F9;
+            --bg-card: rgba(255, 255, 255, 0.9);
+            --bg-sidebar: rgba(255, 255, 255, 0.95);
+            --bg-navbar: rgba(255, 255, 255, 0.95);
+            --text-primary: #0F172A;
+            --text-secondary: #334155;
+            --text-muted: #64748B;
+            --border: rgba(59, 130, 246, 0.2);
+        }
+
+        /* ========== ANIMATED BACKGROUND ========== */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.1;
+            animation: float 25s infinite ease-in-out;
+        }
+
+        .orb1 {
+            width: 600px;
+            height: 600px;
+            background: var(--primary);
+            top: -200px;
+            left: -200px;
+        }
+
+        .orb2 {
+            width: 500px;
+            height: 500px;
+            background: var(--secondary);
+            bottom: -200px;
+            right: -200px;
+            animation-delay: -8s;
+        }
+
+        .orb3 {
+            width: 400px;
+            height: 400px;
+            background: var(--info);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -16s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(50px, 50px) scale(1.1); }
+            50% { transform: translate(-30px, 20px) scale(0.9); }
+            75% { transform: translate(20px, -30px) scale(1.05); }
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, var(--primary) 1px, transparent 1px),
+                radial-gradient(circle at 80% 70%, var(--secondary) 1px, transparent 1px),
+                radial-gradient(circle at 40% 80%, var(--info) 1px, transparent 1px);
+            background-size: 80px 80px;
+            animation: particleMove 30s linear infinite;
+            opacity: 0.05;
+        }
+
+        @keyframes particleMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 80px 80px; }
+        }
+
+        /* ========== FIXED MENU TOGGLE - SHRINK/EXPAND ========== */
+        
+        /* Navbar */
+        .navbar {
+            background: var(--bg-navbar);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* MENU TOGGLE BUTTON */
+        .menu-toggle {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.2rem;
+        }
+
+        .menu-toggle:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .menu-toggle i {
+            transition: transform 0.2s ease;
+        }
+
+        .menu-toggle.active i {
+            transform: rotate(90deg);
+        }
+
+        /* ========== LOGO WITH IMAGE PLACEHOLDER ========== */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-image {
+            width: 200px;
+            height: 60px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* REPLACE THIS IMAGE SOURCE WITH YOUR OWN LOGO */
+        .logo-image img {
+            width: 100%;
+            height: 100%;
+            border-radius: 0px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .logo i {
+            font-size: 1.6rem;
+            color: var(--primary);
+        }
+
+
+        /* ========== SIDEBAR - FIXED POSITION ========== */
+        .sidebar {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: var(--sidebar-width);
+            height: calc(100vh - 70px);
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(16px);
+            border-right: 1px solid var(--border);
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 999;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        /* ========== MAIN CONTENT - SHRINKS WHEN MENU OPENS ========== */
+        .main-content {
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 24px;
+            min-height: calc(100vh - 70px);
+            width: 100%;
+            margin-left: 0;
+        }
+
+        /* DESKTOP - SHRINK WHEN MENU OPENS */
+        @media (min-width: 1024px) {
+            .main-content.shrink {
+                margin-left: var(--sidebar-width);
+                width: calc(100% - var(--sidebar-width));
+            }
+        }
+
+        /* MOBILE - NO SHRINK */
+        @media (max-width: 1023px) {
+            .main-content.shrink {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 24px 16px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* SIDEBAR OVERLAY - FOR MOBILE */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        @media (max-width: 1023px) {
+            .sidebar-overlay.active {
+                display: block;
+                opacity: 1;
+            }
+        }
+
+        /* ========== PREDICTION RESULTS - FIXED VISIBILITY ========== */
+        .hidden {
+            display: none !important;
+        }
+
+        #resultsContainer {
+            display: none;
+        }
+
+        #resultsContainer:not(.hidden) {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        #emptyState {
+            display: block;
+        }
+
+        #emptyState.hidden {
+            display: none !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* HIGH RISK MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-header i {
+            color: var(--danger);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 10px;
+        }
+
+        .close-modal:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .risk-hall-item {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .risk-hall-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .risk-hall-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .risk-badge {
+            background: rgba(239, 68, 68, 0.15);
+            color: #FCA5A5;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .risk-detail {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .risk-detail i {
+            width: 18px;
+            color: var(--danger);
+        }
+
+        .risk-progress {
+            height: 8px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 4px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .risk-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger), #DC2626);
+            border-radius: 4px;
+            width: 0%;
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            margin-bottom: 28px;
+        }
+
+        .page-header h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .card h3 i {
+            color: var(--primary);
+        }
+
+        /* STATS GRID */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .stat-icon.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-icon.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .stat-content h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+            color: var(--text-primary);
+        }
+
+        .stat-content p {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* FORMS */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .quick-form {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .quick-form .form-input {
+            flex: 1;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.8);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+            transform: translateY(-2px);
+        }
+
+        .btn.small {
+            padding: 8px 14px;
+            font-size: 0.8rem;
+        }
+
+        /* TABLES */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .data-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: rgba(15, 23, 42, 0.5);
+            border-bottom: 1px solid var(--border);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 48px !important;
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6EE7B7;
+        }
+
+        .badge.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #FCD34D;
+        }
+
+        .badge.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #FCA5A5;
+        }
+
+        .badge.info {
+            background: rgba(59, 130, 246, 0.15);
+            color: #93C5FD;
+        }
+
+        /* PREDICTION CONTAINER */
+        .prediction-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .prediction-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .prediction-header {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .prediction-header h4 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .prediction-meta {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .total-incidents {
+            text-align: center;
+            margin: 20px 0;
+            padding: 24px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+        }
+
+        .total-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+            margin-top: 8px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 350px;
+            margin: 20px 0;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .detailed-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .detailed-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.5);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .detailed-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+        }
+
+        /* TOAST */
+        #toastContainer {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 99999;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 12px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            animation: slideInRight 0.3s ease;
+            min-width: 320px;
+        }
+
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        .toast.warning { border-left-color: var(--warning); }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* HISTORY CONTROLS */
+        .history-controls {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        /* FEEDBACK */
+        .feedback-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .prediction-comparison {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+        }
+
+        .text-muted {
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        /* LOADING SCREEN */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-deep);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-right-color: var(--secondary);
+            border-bottom-color: var(--info);
+            border-radius: 50%;
+            animation: spin 1s infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* USER DROPDOWN */
+        .user-dropdown {
+            position: relative;
+        }
+
+        .user-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 30px;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        .user-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .user-btn img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 120%;
+            right: 0;
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .user-dropdown:hover .dropdown-menu {
+            display: block;
+        }
+
+        .dropdown-menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-menu a:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-btn {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .main-content { padding: 20px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .logo h1 { display: none; }
+            .logo-image { width: 32px; height: 32px; }
+            .user-btn span { display: none; }
+            .toast { min-width: 280px; }
+        }
+
+        @media (max-width: 480px) {
+            .main-content { padding: 16px; }
+            .stat-card { padding: 16px; }
+            .stat-icon { width: 48px; height: 48px; font-size: 1.3rem; }
+            .stat-content h3 { font-size: 1.5rem; }
+            .btn { padding: 8px 16px; }
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <!-- Animated Background -->
+    <div class="animated-bg">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+        <div class="particles"></div>
+    </div>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- High Risk Modal -->
+    <div id="highRiskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    High Risk Halls
+                </h3>
+                <button class="close-modal" onclick="closeHighRiskModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="highRiskModalBody">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo">
+                <!-- ========== IMAGE PLACEHOLDER - REPLACE THIS SOURCE ========== -->
+                <div class="logo-image">
+                    <img src="/images/Screenshot 2026-02-16 191639.png">
+                    <!-- REPLACE THE LINE ABOVE WITH YOUR OWN IMAGE PATH -->
+                </div>
+                <h1>Misconduct Prediction</h1>
+            </div>
+        </div>
+        
+        <div class="nav-right">
+            <button class="nav-btn" id="darkModeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+            
+            <div class="user-dropdown">
+                <button class="user-btn">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=3B82F6&color=fff&size=128" alt="User">
+                    <span id="userName">Admin</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-menu">
+                    <a href="#" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar - HIDDEN BY DEFAULT -->
+    <aside class="sidebar" id="sidebar">
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-page="dashboard">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-page="predict">
+                <i class="fas fa-chart-line"></i>
+                <span>Make Prediction</span>
+            </a>
+            <a href="#" class="nav-item" data-page="history">
+                <i class="fas fa-history"></i>
+                <span>History</span>
+            </a>
+            <a href="#" class="nav-item" data-page="analytics">
+                <i class="fas fa-chart-pie"></i>
+                <span>Analytics</span>
+            </a>
+            <a href="#" class="nav-item" data-page="feedback">
+                <i class="fas fa-clipboard-check"></i>
+                <span>End of Semester</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content - SHRINKS WHEN MENU OPENS -->
+    <main class="main-content" id="mainContent">
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="loading-screen">
+            <div class="spinner"></div>
+            <p>Loading Dashboard...</p>
+        </div>
+
+        <!-- DASHBOARD PAGE -->
+        <div id="dashboardPage" class="page active">
+            <div class="page-header">
+                <h2>Dashboard</h2>
+                <p>Welcome back, <span id="welcomeName">User</span></p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalHalls">19</h3>
+                        <p>Total Halls</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalPredictions">0</h3>
+                        <p>Predictions</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card" onclick="openHighRiskModal()">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="highRiskCount">0</h3>
+                        <p>High Risk Halls</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="modelAccuracy">94.2%</h3>
+                        <p>Accuracy</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3><i class="fas fa-bolt"></i> Quick Prediction</h3>
+                <div class="quick-form">
+                    <select id="quickHall" class="form-input">
+                        <option value="">Select Hall</option>
+                    </select>
+                    <button id="quickPredict" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Predict
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3><i class="fas fa-clock"></i> Recent Predictions</h3>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Hall</th>
+                                <th>Sem</th>
+                                <th>Year</th>
+                                <th>Incidents</th>
+                                <th>Date</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <p>No predictions yet</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PREDICT PAGE -->
+        <div id="predictPage" class="page">
+            <div class="page-header">
+                <h2>Make Prediction</h2>
+                <p>Predict misconduct counts for a specific hall</p>
+            </div>
+            
+            <div class="prediction-container">
+                <div class="card">
+                    <h3><i class="fas fa-sliders-h"></i> Parameters</h3>
+                    <form id="predictionForm">
+                        <div class="form-group">
+                            <label>Hall</label>
+                            <select id="hallSelect" class="form-input" required>
+                                <option value="">Choose a hall...</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Semester</label>
+                                <select id="semesterSelect" class="form-input" required>
+                                    <option value="">Select</option>
+                                    <option value="1">First Semester</option>
+                                    <option value="2">Second Semester</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Year</label>
+                                <select id="yearSelect" class="form-input" required>
+                                    <option value="">Select</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026">2026</option>
+                                    <option value="2027">2027</option>
+                                    <option value="2028">2028</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button type="submit" class="btn btn-primary" style="flex: 2;">
+                                <i class="fas fa-calculator"></i> Generate
+                            </button>
+                            <button type="button" id="predictAllBtn" class="btn btn-secondary" style="flex: 1;">
+                                <i class="fas fa-layer-group"></i> All Halls
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <h3><i class="fas fa-chart-bar"></i> Results</h3>
+                    <div id="emptyState">
+                        <i class="fas fa-chart-line"></i>
+                        <p>Fill the form to generate predictions</p>
+                    </div>
+                    <div id="resultsContainer" class="hidden">
+                        <div class="prediction-header">
+                            <h4 id="resultHallName">-</h4>
+                            <div class="prediction-meta">
+                                <span id="resultSemester">Semester 1, 2025</span>
+                            </div>
+                        </div>
+                        <div class="total-incidents">
+                            <h5>Total Predicted Incidents</h5>
+                            <div class="total-number" id="totalIncidents">0</div>
+                        </div>
+                        <div class="chart-container">
+                            <div id="misconductChart"></div>
+                        </div>
+                        <div class="table-container">
+                            <h5>Detailed Predictions</h5>
+                            <table class="detailed-table">
+                                <thead>
+                                    <tr>
+                                        <th>Misconduct</th>
+                                        <th>Count</th>
+                                        <th>Risk</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailedResults"></tbody>
+                            </table>
+                        </div>
+                        <div class="action-buttons">
+                            <button id="savePrediction" class="btn btn-success">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                            <button id="newPrediction" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> New
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HISTORY PAGE -->
+        <div id="historyPage" class="page">
+            <div class="page-header">
+                <h2>History</h2>
+                <p>All saved predictions</p>
+            </div>
+            <div class="card">
+                <h3><i class="fas fa-history"></i> Prediction History</h3>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Hall</th>
+                                <th>Sem</th>
+                                <th>Year</th>
+                                <th>Incidents</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTable"></tbody>
+                    </table>
+                </div>
+                <div class="history-controls">
+                    <button id="clearHistoryBtn" class="btn btn-danger">
+                        <i class="fas fa-trash-alt"></i> Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS PAGE -->
+        <div id="analyticsPage" class="page">
+            <div class="page-header">
+                <h2>Analytics</h2>
+                <p>Visual analysis of predictions</p>
+            </div>
+            <div class="card">
+                <h3><i class="fas fa-chart-pie"></i> Hall Comparison</h3>
+                <div id="hallChart" class="chart-container"></div>
+            </div>
+        </div>
+
+        <!-- FEEDBACK PAGE -->
+        <div id="feedbackPage" class="page">
+            <div class="page-header">
+                <h2><i class="fas fa-clipboard-check"></i> End of Semester</h2>
+                <p>Record actual incidents to improve the model</p>
+            </div>
+            <div class="feedback-container">
+                <div class="card">
+                    <h3><i class="fas fa-calendar"></i> 1. Select Semester</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Semester</label>
+                            <select id="feedbackSemester" class="form-input">
+                                <option value="1">First Semester</option>
+                                <option value="2">Second Semester</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Year</label>
+                            <select id="feedbackYear" class="form-input">
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="loadPredictionsForFeedback" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Load Predictions
+                    </button>
+                </div>
+                <div class="card" id="hallFeedbackSection" style="display: none;">
+                    <h3><i class="fas fa-building"></i> 2. Select Hall</h3>
+                    <select id="feedbackHallSelect" class="form-input">
+                        <option value="">Choose a hall...</option>
+                    </select>
+                </div>
+                <div class="card" id="feedbackFormSection" style="display: none;">
+                    <h3><i class="fas fa-edit"></i> 3. Actual Incidents - <span id="selectedHallName"></span></h3>
+                    <p class="text-muted">Semester <span id="selectedSemester"></span>, <span id="selectedYear"></span></p>
+                    <div class="prediction-comparison">
+                        <div class="table-container">
+                            <table class="detailed-table">
+                                <thead>
+                                    <tr>
+                                        <th>Misconduct</th>
+                                        <th>Predicted</th>
+                                        <th>Actual</th>
+                                        <th>Diff</th>
+                                        <th>Acc</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="feedbackTableBody"></tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td><strong>TOTAL</strong></td>
+                                        <td id="totalPredicted">0</td>
+                                        <td id="totalActual">0</td>
+                                        <td id="totalDifference">0</td>
+                                        <td id="totalAccuracy">100%</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; margin-top: 20px;">
+                        <button id="submitFeedbackBtn" class="btn btn-success">
+                            <i class="fas fa-chart-line"></i> Submit & Improve
+                        </button>
+                        <button id="resetFeedbackBtn" class="btn btn-secondary">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="card" id="improvementStats" style="display: none;">
+                    <h3><i class="fas fa-robot"></i> Model Improvement</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon success">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="accuracyImprovement">+0%</h3>
+                                <p>Improvement</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="newTrainingSamples">0</h3>
+                                <p>Samples</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon warning">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="newModelAccuracy">94.2%</h3>
+                                <p>Accuracy</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="downloadFeedbackData" class="btn btn-secondary" style="margin-top: 20px;">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <script src="script.js"></script>
+    
+    <!-- ========== FIXED MENU TOGGLE - SHRINK/EXPAND ========== -->
+    <script>
+        (function() {
+            'use strict';
+            
+            // Get elements
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            console.log('Menu Toggle Script Loaded');
+            
+            if (menuToggle && sidebar && mainContent) {
+                // Initial state - sidebar HIDDEN, main content FULL WIDTH
+                sidebar.classList.remove('active');
+                menuToggle.classList.remove('active');
+                mainContent.classList.remove('shrink');
+                
+                // CLICK MENU - TOGGLE SIDEBAR AND SHRINK/EXPAND MAIN CONTENT
+                menuToggle.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('Menu clicked! Current state:', sidebar.classList.contains('active'));
+                    
+                    // TOGGLE SIDEBAR
+                    sidebar.classList.toggle('active');
+                    this.classList.toggle('active');
+                    
+                    // TOGGLE MAIN CONTENT SHRINK/EXPAND
+                    mainContent.classList.toggle('shrink');
+                    
+                    // Update icon
+                    const icon = this.querySelector('i');
+                    if (sidebar.classList.contains('active')) {
+                        icon.className = 'fas fa-times'; // X when open
+                        if (window.innerWidth < 1024 && overlay) overlay.classList.add('active');
+                        console.log('Sidebar OPENED - Main content SHRUNK');
+                    } else {
+                        icon.className = 'fas fa-bars'; // Bars when closed
+                        if (overlay) overlay.classList.remove('active');
+                        console.log('Sidebar CLOSED - Main content EXPANDED');
+                    }
+                };
+                
+                // CLICK OVERLAY - CLOSE MENU AND EXPAND MAIN CONTENT
+                if (overlay) {
+                    overlay.onclick = function() {
+                        sidebar.classList.remove('active');
+                        menuToggle.classList.remove('active');
+                        mainContent.classList.remove('shrink'); // EXPAND main content
+                        overlay.classList.remove('active');
+                        const icon = menuToggle.querySelector('i');
+                        if (icon) icon.className = 'fas fa-bars';
+                        console.log('Overlay clicked - Menu closed, Main content EXPANDED');
+                    };
+                }
+                
+                // CLICK NAV ITEM - CLOSE MENU ON MOBILE AND EXPAND MAIN CONTENT
+                const navItems = sidebar.querySelectorAll('.nav-item');
+                navItems.forEach(function(item) {
+                    item.addEventListener('click', function() {
+                        if (window.innerWidth < 1024) {
+                            sidebar.classList.remove('active');
+                            menuToggle.classList.remove('active');
+                            mainContent.classList.remove('shrink'); // EXPAND main content
+                            if (overlay) overlay.classList.remove('active');
+                            const icon = menuToggle.querySelector('i');
+                            if (icon) icon.className = 'fas fa-bars';
+                        }
+                    });
+                });
+                
+                // CLICK ANYWHERE ELSE ON DESKTOP - CLOSE MENU AND EXPAND
+                document.addEventListener('click', function(e) {
+                    // Only on desktop
+                    if (window.innerWidth >= 1024) {
+                        // If click is outside sidebar and not on menu toggle
+                        if (sidebar.classList.contains('active') && 
+                            !sidebar.contains(e.target) && 
+                            e.target !== menuToggle && 
+                            !menuToggle.contains(e.target)) {
+                            
+                            sidebar.classList.remove('active');
+                            menuToggle.classList.remove('active');
+                            mainContent.classList.remove('shrink'); // EXPAND main content
+                            const icon = menuToggle.querySelector('i');
+                            if (icon) icon.className = 'fas fa-bars';
+                            console.log('Clicked outside - Menu closed, Main content EXPANDED');
+                        }
+                    }
+                });
+                
+                // HANDLE WINDOW RESIZE
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth >= 1024) {
+                        // Desktop - menu state persists, overlay hidden
+                        if (overlay) overlay.classList.remove('active');
+                        
+                        // Ensure shrink class matches sidebar state
+                        if (sidebar.classList.contains('active')) {
+                            mainContent.classList.add('shrink');
+                        } else {
+                            mainContent.classList.remove('shrink');
+                        }
+                    } else {
+                        // Mobile - close menu when switching to mobile
+                        sidebar.classList.remove('active');
+                        menuToggle.classList.remove('active');
+                        mainContent.classList.remove('shrink'); // EXPAND main content
+                        if (overlay) overlay.classList.remove('active');
+                        const icon = menuToggle.querySelector('i');
+                        if (icon) icon.className = 'fas fa-bars';
+                    }
+                });
+            }
+        })();
+    </script>
+    
+    <!-- ========== HIGH RISK MODAL FUNCTIONS ========== -->
+    <script>
+        function openHighRiskModal() {
+            const modal = document.getElementById('highRiskModal');
+            const modalBody = document.getElementById('highRiskModalBody');
+            
+            const predictions = JSON.parse(localStorage.getItem('predictions') || '[]');
+            const highRiskHalls = {};
+            
+            predictions.forEach(pred => {
+                if (pred.total_incidents > 50) {
+                    if (!highRiskHalls[pred.hall_name]) {
+                        highRiskHalls[pred.hall_name] = {
+                            total: 0,
+                            count: 0,
+                            latest: pred.saved_at || pred.timestamp
+                        };
+                    }
+                    highRiskHalls[pred.hall_name].total += pred.total_incidents;
+                    highRiskHalls[pred.hall_name].count++;
+                }
+            });
+            
+            let html = '';
+            
+            if (Object.keys(highRiskHalls).length === 0) {
+                html = '<p style="color: #94A3B8; text-align: center; padding: 20px;">No high risk halls at this time.</p>';
+            } else {
+                Object.entries(highRiskHalls).forEach(([hall, data]) => {
+                    const avg = Math.round(data.total / data.count);
+                    const riskPercentage = Math.min(100, (avg / 80) * 100);
+                    
+                    html += `
+                        <div class="risk-hall-item">
+                            <div class="risk-hall-header">
+                                <span class="risk-hall-name">${hall}</span>
+                                <span class="risk-badge">CRITICAL</span>
+                            </div>
+                            <div class="risk-detail">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>Average incidents: <strong>${avg}</strong> per semester</span>
+                            </div>
+                            <div class="risk-detail">
+                                <i class="fas fa-calendar"></i>
+                                <span>Last predicted: ${formatDate(data.latest)}</span>
+                            </div>
+                            <div class="risk-detail">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Risk threshold exceeded by <strong style="color: #EF4444;">${avg - 50}+ incidents</strong></span>
+                            </div>
+                            <div class="risk-progress">
+                                <div class="risk-progress-bar" style="width: ${riskPercentage}%;"></div>
+                            </div>
+                            <p style="color: #94A3B8; font-size: 0.8rem; margin-top: 12px;">
+                                <i class="fas fa-info-circle"></i> Halls with >50 incidents are classified as high risk
+                            </p>
+                        </div>
+                    `;
+                });
+            }
+            
+            modalBody.innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function closeHighRiskModal() {
+            document.getElementById('highRiskModal').classList.remove('active');
+        }
+
+        window.onclick = function(e) {
+            const modal = document.getElementById('highRiskModal');
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        };
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return dateString;
+                return date.toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric'
+                });
+            } catch {
+                return dateString;
+            }
+        }
+    </script>
+    
+    <!-- ========== FIXED PREDICTION RESULTS DISPLAY ========== -->
+    <script>
+        // Override the displayPredictionResults function to ensure results show
+        window.displayPredictionResults = function(result) {
+            console.log('Displaying prediction results:', result);
+            
+            // Update UI elements
+            const resultHallName = document.getElementById('resultHallName');
+            const resultSemester = document.getElementById('resultSemester');
+            const totalIncidents = document.getElementById('totalIncidents');
+            const detailedResults = document.getElementById('detailedResults');
+            const emptyState = document.getElementById('emptyState');
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            if (resultHallName) resultHallName.textContent = result.hall_name || 'Unknown Hall';
+            if (resultSemester) resultSemester.textContent = `Semester ${result.semester || '1'}, ${result.year || '2025'}`;
+            if (totalIncidents) totalIncidents.textContent = result.total_incidents || 0;
+            
+            // Populate detailed results table
+            if (detailedResults && result.predictions) {
+                detailedResults.innerHTML = '';
+                
+                result.predictions.forEach(pred => {
+                    const row = document.createElement('tr');
+                    const riskClass = pred.risk === 'High' ? 'danger' : pred.risk === 'Medium' ? 'warning' : 'success';
+                    
+                    row.innerHTML = `
+                        <td>${pred.type || 'Unknown'}</td>
+                        <td><strong>${pred.count || 0}</strong></td>
+                        <td><span class="badge ${riskClass}">${pred.risk || 'Low'}</span></td>
+                    `;
+                    detailedResults.appendChild(row);
+                });
+            }
+            
+            // SHOW RESULTS CONTAINER, HIDE EMPTY STATE
+            if (emptyState) emptyState.classList.add('hidden');
+            if (resultsContainer) {
+                resultsContainer.classList.remove('hidden');
+                console.log('Results container shown');
+            }
+            
+            // Create chart
+            if (window.createMisconductChart && result.predictions) {
+                window.createMisconductChart(result.predictions);
+            }
+            
+            // Store current prediction
+            window.currentPrediction = {
+                id: 'pred-' + Date.now(),
+                hall_id: document.getElementById('hallSelect')?.value,
+                hall_name: result.hall_name,
+                semester: result.semester,
+                year: result.year,
+                predictions: result.predictions,
+                total_incidents: result.total_incidents,
+                timestamp: result.timestamp || new Date().toISOString()
+            };
+            
+            console.log('Prediction displayed successfully');
+        };
+    </script>
+</body>
+</html>
