@@ -295,19 +295,16 @@ async function loadModelMetrics() {
                     mape: data.metrics.mape || 0.38
                 };
                 
-                // Update dashboard with R² percentage
                 if (elements.modelAccuracy) {
                     elements.modelAccuracy.textContent = `${modelMetrics.r2_percentage.toFixed(2)}%`;
                 }
                 
-                // Store in localStorage as backup
                 localStorage.setItem('model_accuracy', modelMetrics.r2_percentage.toString());
                 localStorage.setItem('model_metrics', JSON.stringify(modelMetrics));
                 
                 console.log('✅ Loaded real XGBoost metrics:', modelMetrics);
             }
         } else {
-            // Fallback to stored or default values
             const savedMetrics = localStorage.getItem('model_metrics');
             if (savedMetrics) {
                 modelMetrics = JSON.parse(savedMetrics);
@@ -318,7 +315,6 @@ async function loadModelMetrics() {
         }
     } catch (error) {
         console.error('Error loading model metrics:', error);
-        // Fallback to your actual XGBoost metrics
         if (elements.modelAccuracy) {
             elements.modelAccuracy.textContent = '93.72%';
         }
@@ -405,7 +401,6 @@ async function loadDashboardData() {
             elements.totalHalls.textContent = '19';
         }
         
-        // Ensure model accuracy is showing the real value
         if (elements.modelAccuracy) {
             elements.modelAccuracy.textContent = `${modelMetrics.r2_percentage.toFixed(2)}%`;
         }
@@ -505,13 +500,27 @@ async function handlePrediction(e) {
         if (!response.ok) throw new Error('Prediction failed');
         
         const result = await response.json();
+        
+        // ✅ FIX: Store current prediction BEFORE displaying
+        currentPrediction = {
+            id: 'pred-' + Date.now(),
+            hall_id: parseInt(hallId),
+            hall_name: result.hall_name,
+            semester: result.semester,
+            year: result.year,
+            predictions: result.predictions,
+            total_incidents: result.total_incidents,
+            timestamp: result.timestamp || new Date().toISOString()
+        };
+        
+        console.log('✅ Current prediction stored:', currentPrediction);
+        
         displayPredictionResults(result);
         
-        // CRITICAL - These lines show the results
         if (elements.emptyState) elements.emptyState.classList.add('hidden');
         if (elements.resultsContainer) elements.resultsContainer.classList.remove('hidden');
         
-        showToast('Prediction generated!', 'success');
+        showToast('Prediction generated! Click Save to store it.', 'success');
         
     } catch (error) {
         console.error('Prediction error:', error);
@@ -570,7 +579,6 @@ async function handlePredictAll() {
                     const result = await response.json();
                     const localPredictions = JSON.parse(localStorage.getItem('predictions') || '[]');
                     
-                    // Create a complete prediction object
                     const newPrediction = {
                         id: 'pred-' + Date.now() + '-' + i,
                         hall_id: hallIds[i],
@@ -606,7 +614,6 @@ async function handlePredictAll() {
 function displayPredictionResults(result) {
     console.log('Displaying prediction results:', result);
     
-    // Update header
     if (elements.resultHallName) elements.resultHallName.textContent = result.hall_name || 'Unknown Hall';
     if (elements.resultSemester) elements.resultSemester.textContent = `Semester ${result.semester || '1'}, ${result.year || '2025'}`;
     if (elements.resultDate) {
@@ -614,7 +621,6 @@ function displayPredictionResults(result) {
     }
     if (elements.totalIncidents) elements.totalIncidents.textContent = result.total_incidents || 0;
     
-    // Populate detailed results table
     const tbody = elements.detailedResults;
     if (tbody) {
         tbody.innerHTML = '';
@@ -633,37 +639,17 @@ function displayPredictionResults(result) {
         }
     }
     
-    // ========== CRITICAL FIX - SHOW RESULTS, HIDE EMPTY STATE ==========
     if (elements.emptyState) {
         elements.emptyState.classList.add('hidden');
-        console.log('✅ Empty state hidden');
     }
     
     if (elements.resultsContainer) {
         elements.resultsContainer.classList.remove('hidden');
-        console.log('✅ Results container shown - PREDICTION VISIBLE!');
     }
     
-    // ========== FIXED: Store current prediction with ALL required fields ==========
-    currentPrediction = {
-        id: 'pred-' + Date.now(),
-        hall_id: parseInt(elements.hallSelect?.value) || result.hall_id,
-        hall_name: result.hall_name,
-        semester: result.semester,
-        year: result.year,
-        predictions: result.predictions,
-        total_incidents: result.total_incidents,
-        timestamp: result.timestamp || new Date().toISOString()
-    };
-    
-    console.log('✅ Current prediction stored:', currentPrediction);
-    
-    // Create chart
     if (result.predictions) {
         createMisconductChart(result.predictions);
     }
-    
-    console.log('Prediction display complete');
 }
 
 function createMisconductChart(predictions) {
@@ -732,7 +718,6 @@ async function saveCurrentPrediction() {
         return;
     }
     
-    // Check if we have all required fields
     if (!currentPrediction.hall_name || !currentPrediction.predictions || !currentPrediction.total_incidents) {
         console.error('Invalid prediction data:', currentPrediction);
         showToast('Invalid prediction data', 'error');
@@ -744,7 +729,6 @@ async function saveCurrentPrediction() {
         
         const localPredictions = JSON.parse(localStorage.getItem('predictions') || '[]');
         
-        // Create a clean prediction object with all required fields
         const predictionToSave = {
             id: 'pred-' + Date.now(),
             hall_id: currentPrediction.hall_id,
@@ -760,7 +744,6 @@ async function saveCurrentPrediction() {
         localPredictions.unshift(predictionToSave);
         localStorage.setItem('predictions', JSON.stringify(localPredictions));
         
-        // Update dashboard counters
         if (elements.totalPredictions) {
             elements.totalPredictions.textContent = localPredictions.length.toString();
         }
@@ -770,13 +753,23 @@ async function saveCurrentPrediction() {
             elements.highRiskCount.textContent = highRiskCount.toString();
         }
         
+        // ✅ FIX: Immediately update history and recent table
+        await loadHistory();
+        await loadDashboardData();
+        
+        const recentPredictions = localPredictions.slice(0, 5).map((pred, index) => ({
+            id: pred.id || `local-${Date.now()}-${index}`,
+            hall_name: pred.hall_name,
+            semester: pred.semester,
+            year: pred.year,
+            total_count: pred.total_incidents,
+            predicted_at: pred.saved_at || pred.timestamp,
+            local: true
+        }));
+        updateRecentTable(recentPredictions);
+        
         showToast('Prediction saved successfully!', 'success');
         
-        // Refresh dashboard data
-        await loadDashboardData();
-        await loadHistory();
-        
-        // Optionally reset the form after saving
         setTimeout(() => resetPredictionForm(), 1500);
         
     } catch (error) {
@@ -798,7 +791,6 @@ async function loadHistory() {
     try {
         const localPredictions = JSON.parse(localStorage.getItem('predictions') || '[]');
         
-        // Sort by date (newest first)
         localPredictions.sort((a, b) => {
             const dateA = new Date(a.saved_at || a.timestamp || 0);
             const dateB = new Date(b.saved_at || b.timestamp || 0);
@@ -886,19 +878,16 @@ window.deletePrediction = function(predictionId) {
             localStorage.setItem('predictions', JSON.stringify(localPredictions));
             showToast('Prediction deleted', 'success');
             
-            // Refresh the current page
             if (elements.pages.history.classList.contains('active')) {
                 loadHistory();
             } else {
                 loadDashboardData();
             }
             
-            // ====== FIX: Refresh analytics if it's visible ======
             if (elements.pages.analytics.classList.contains('active')) {
                 loadAnalytics();
             }
             
-            // Update dashboard counters
             if (elements.totalPredictions) {
                 elements.totalPredictions.textContent = localPredictions.length.toString();
             }
@@ -914,7 +903,7 @@ window.deletePrediction = function(predictionId) {
     }
 };
 
-// ========== CLEAR ALL HISTORY - FIXED: Also clears analytics ==========
+// ========== CLEAR ALL HISTORY ==========
 window.clearAllHistory = function() {
     try {
         const localPredictions = JSON.parse(localStorage.getItem('predictions') || '[]');
@@ -928,23 +917,19 @@ window.clearAllHistory = function() {
             localStorage.removeItem('predictions');
             showToast('All predictions cleared', 'success');
             
-            // Refresh the current page
             if (elements.pages.history.classList.contains('active')) {
                 loadHistory();
             } else {
                 loadDashboardData();
             }
             
-            // ====== FIX: Also refresh analytics if it's visible ======
             if (elements.pages.analytics.classList.contains('active')) {
                 loadAnalytics();
             }
             
-            // Reset counters
             if (elements.totalPredictions) elements.totalPredictions.textContent = '0';
             if (elements.highRiskCount) elements.highRiskCount.textContent = '0';
             
-            // Clear current prediction if any
             currentPrediction = null;
             if (elements.misconductChart) elements.misconductChart.innerHTML = '';
         }
@@ -965,29 +950,34 @@ window.viewPrediction = function(predictionId) {
         const localPredictions = JSON.parse(localStorage.getItem('predictions') || '[]');
         let prediction = localPredictions.find(p => p.id === predictionId);
         
-        if (!prediction) {
-            showToast('Prediction not found', 'error');
-            return;
+        if (!prediction && !isNaN(parseInt(predictionId))) {
+            const index = parseInt(predictionId) - 1;
+            if (index >= 0 && index < localPredictions.length) {
+                prediction = localPredictions[index];
+            }
         }
         
-        showPage('predict');
-        
-        const formatted = {
-            hall_name: prediction.hall_name,
-            semester: prediction.semester,
-            year: prediction.year,
-            total_incidents: prediction.total_incidents,
-            predictions: prediction.predictions,
-            timestamp: prediction.saved_at || prediction.timestamp
-        };
-        
-        displayPredictionResults(formatted);
-        
-        // CRITICAL - These lines show the results
-        if (elements.emptyState) elements.emptyState.classList.add('hidden');
-        if (elements.resultsContainer) elements.resultsContainer.classList.remove('hidden');
-        
-        showToast('Prediction loaded', 'success');
+        if (prediction) {
+            showPage('predict');
+            
+            const formatted = {
+                hall_name: prediction.hall_name,
+                semester: prediction.semester,
+                year: prediction.year,
+                total_incidents: prediction.total_incidents,
+                predictions: prediction.predictions,
+                timestamp: prediction.saved_at || prediction.timestamp
+            };
+            
+            displayPredictionResults(formatted);
+            
+            if (elements.emptyState) elements.emptyState.classList.add('hidden');
+            if (elements.resultsContainer) elements.resultsContainer.classList.remove('hidden');
+            
+            showToast('Prediction loaded', 'success');
+        } else {
+            showToast('Not found', 'error');
+        }
     } catch (error) {
         console.error('View error:', error);
         showToast('Failed to load prediction', 'error');
@@ -1012,32 +1002,16 @@ async function loadAnalytics() {
             return;
         }
         
-        // Calculate hall totals
         const hallTotals = {};
-        const semesterData = { '1': 0, '2': 0 };
-        const yearData = {};
-        
         localPredictions.forEach(pred => {
             const hallName = pred.hall_name;
             if (!hallTotals[hallName]) hallTotals[hallName] = 0;
             hallTotals[hallName] += pred.total_incidents || 0;
-            
-            // Track semester data
-            if (pred.semester) {
-                semesterData[pred.semester] = (semesterData[pred.semester] || 0) + pred.total_incidents;
-            }
-            
-            // Track year data
-            if (pred.year) {
-                if (!yearData[pred.year]) yearData[pred.year] = 0;
-                yearData[pred.year] += pred.total_incidents;
-            }
         });
         
-        // Sort halls by total incidents (highest first)
         const sortedHalls = Object.entries(hallTotals)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 10); // Top 10 halls
+            .slice(0, 10);
         
         const hallNames = sortedHalls.map(h => h[0]);
         const hallCounts = sortedHalls.map(h => h[1]);
@@ -1057,14 +1031,7 @@ async function loadAnalytics() {
                 bar: {
                     borderRadius: 6,
                     columnWidth: '60%',
-                    dataLabels: { position: 'top' },
-                    colors: {
-                        ranges: [{
-                            from: 0,
-                            to: 1000,
-                            color: '#3B82F6'
-                        }]
-                    }
+                    dataLabels: { position: 'top' }
                 }
             },
             colors: ['#3B82F6'],
@@ -1095,17 +1062,16 @@ async function loadAnalytics() {
             analyticsChart.render();
         }
         
-        // Add summary stats below chart
+        const totalPredictions = localPredictions.length;
+        const totalIncidents = localPredictions.reduce((sum, p) => sum + (p.total_incidents || 0), 0);
+        const avgIncidents = Math.round(totalIncidents / totalPredictions);
+        
         const summaryDiv = document.createElement('div');
         summaryDiv.className = 'analytics-summary';
         summaryDiv.style.marginTop = '20px';
         summaryDiv.style.padding = '20px';
         summaryDiv.style.background = darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)';
         summaryDiv.style.borderRadius = '8px';
-        
-        const totalPredictions = localPredictions.length;
-        const totalIncidents = localPredictions.reduce((sum, p) => sum + (p.total_incidents || 0), 0);
-        const avgIncidents = Math.round(totalIncidents / totalPredictions);
         
         summaryDiv.innerHTML = `
             <h4 style="margin-bottom: 15px; color: ${darkMode ? '#F1F5F9' : '#0F172A'};">Summary Statistics</h4>
@@ -1368,14 +1334,12 @@ function updateTrainingData(feedbackData) {
         accuracy: feedbackData.accuracy
     });
     
-    // Keep only last 500 samples
     if (trainingData.length > 500) trainingData = trainingData.slice(-500);
     localStorage.setItem('training_data', JSON.stringify(trainingData));
     updateModelAccuracy();
 }
 
 function updateModelAccuracy() {
-    // Fetch real model metrics instead of calculating from feedback
     fetch(`${API_BASE_URL}/model-info`)
         .then(response => response.json())
         .then(data => {
@@ -1388,7 +1352,6 @@ function updateModelAccuracy() {
             }
         })
         .catch(() => {
-            // Keep existing value if fetch fails
             if (elements.modelAccuracy) {
                 elements.modelAccuracy.textContent = `${modelMetrics.r2_percentage.toFixed(2)}%`;
             }
@@ -1396,7 +1359,6 @@ function updateModelAccuracy() {
 }
 
 function showImprovementStats(feedbackData, newAccuracy) {
-    // Use real model accuracy instead of hardcoded
     const oldAccuracy = modelMetrics.r2_percentage;
     const improvement = (newAccuracy - oldAccuracy).toFixed(1);
     
@@ -1429,7 +1391,7 @@ function exportFeedbackData() {
         model_accuracy: modelMetrics.r2_percentage,
         model_metrics: modelMetrics,
         total_predictions: predictions.length,
-        predictions: predictions.slice(0, 10), // Only include last 10 predictions to keep file size manageable
+        predictions: predictions.slice(0, 10),
         export_date: new Date().toISOString(),
         version: '2.0.0'
     };
