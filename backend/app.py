@@ -13,11 +13,11 @@ CORS(app)
 
 # ==================== DATABASE CONFIGURATION ====================
 DB_CONFIG = {
-    'host': 'localhost',
+    'host': 'hopper.proxy.rlwy.net',
     'user': 'root',
-    'password': 'ThatsMyBoy.44',  # Your MySQL password
-    'database': 'uniguard',
-    'port': 3306,
+    'password': 'FxxqTPkepdvjfClUcjsiXZikmgtWQBD',  # Your MySQL password
+    'database': 'Railway',
+    'port': 28787,
     'charset': 'utf8mb4',
     'use_pure': True
 }
